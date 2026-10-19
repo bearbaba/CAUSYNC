@@ -88,11 +88,9 @@ The `source_sha256` matches the immutable `evidence_sha256`; the on-chain result
 | Sender wallet (Studio header) | Transaction | Studio observation | Current conclusion |
 | --- | --- | --- | --- |
 | Original owner `0x4C...8Dcb` | [`0x1a97044f6e6f05e6ee299a85b73cc0ff0bfd1c9237d6ac251fd4ab30324b7d4d`](https://explorer-studio.genlayer.com/tx/0x1a97044f6e6f05e6ee299a85b73cc0ff0bfd1c9237d6ac251fd4ab30324b7d4d) | Red `FINALIZED` `resolve_case` entry | Case #1 was already `RESOLVED`; the implementation rejects repeat resolution (`case not awaiting resolution`). Execution error needs explicit confirmation. |
-| Non-owner `0xD6...C2aF` | [`0x2a1161b31c645cbfffe15d20ba7385833b10ab3b56f21525eb4f69be6d7c0ba2`](https://explorer-studio.genlayer.com/tx/0x2a1161b31c645cbfffe15d20ba7385833b10ab3b56f21525eb4f69be6d7c0ba2) | Red `FINALIZED` `resolve_case` entry | The `_owner_only()` guard occurs before the case-state check; `owner only` is the expected error. **The actual GenVM error string has not been independently verified.** |
+| Non-owner `0xD6...C2aF` | [`0x2a1161b31c645cbfffe15d20ba7385833b10ab3b56f21525eb4f69be6d7c0ba2`](https://explorer-studio.genlayer.com/tx/0x2a1161b31c645cbfffe15d20ba7385833b10ab3b56f21525eb4f69be6d7c0ba2) | **FINALIZED / ERROR**, input `{\"args\":[1],\"method\":\"resolve_case\"}` | **Confirmed from Studio transaction detail screenshot:** all 5 validators display `[rollback] owner only` and `Agree`; the unauthorized write was rejected. |
 
-`FINALIZED` indicates lifecycle finality, **not successful execution**. Red Studio status entries suggest failed execution, but the screenshot does not expose the GenVM result/error reason. These transactions are evidence of a live attempted negative case; do not claim the `owner only` error is conclusively established until its transaction detail or log is captured.
-
-**To close this final verification:** open the non-owner transaction and capture **GenVM Execution → Execution Result (ERROR)** plus error text `owner only`, and compare `case_status(1)` to the unchanged `RESOLVED / AGENT_FAULT / mask 2` readback. No new write is required.
+**Direct Studio transaction detail (2026-10-19)** confirms the non-owner `resolve_case(1)` input, `Status: FINALIZED`, `Result: ERROR`, `Output: None`, and **five validator entries** each reporting `[rollback] owner only` with `Agree`. This is a live Studionet access-control rejection, not a hypothetical CI-only test. `FINALIZED` denotes transaction lifecycle finality, while `ERROR` documents that the contract did **not** complete the unauthorized write. This does not by itself prove a fresh post-error state readback; the previously observed Case #1 state was `RESOLVED / AGENT_FAULT / mask 2`. The owner transaction's precise revert reason has not been captured, and is not claimed.
 
 ## Remaining verification
 
@@ -101,6 +99,7 @@ The `source_sha256` matches the immutable `evidence_sha256`; the on-chain result
 - [x] Both cases: `RESOLVED` readbacks, digest matches, verdicts and supporting evidence recorded.
 - [x] Case #2 `can_certify(2, A/B/C)` all denied: `false / false / false` (user-confirmed after full-address guidance; exact input text not independently captured).
 - [ ] Optionally cross-check receipt details directly in Explorer; linked URLs above come from the user-supplied hashes.
-- [~] Two live unauthorized/replay attempts are now linked and Studio FINALIZED; exact GenVM failure reason for the non-owner attempt and unchanged readback still require confirmation. CI access-control tests pass.
+- [x] **Live unauthorized `resolve_case(1)` rejection confirmed**: Studio FINALIZED / ERROR, five validators Agree on `[rollback] owner only`, full TX hash linked above. CI authorization tests also pass.
+- [ ] Optional post-rejection `case_status(1)` readback to independently confirm unchanged state. No new write transaction required.
 
 No real disputes, attestations of consent, or authentic third-party execution traces are asserted by these **synthetic demonstration cases**.

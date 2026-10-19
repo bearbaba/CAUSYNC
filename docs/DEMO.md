@@ -64,7 +64,7 @@ Detailed Case #1 and Case #2 readbacks: [STUDIONET_EVIDENCE.md](STUDIONET_EVIDEN
 | Case 1 can_certify(A/B/C) | **true / false / true** (user-provided readbacks) | — |
 | Case 2 create/submit/resolve | **FINALIZED (Studio screenshot)**; RESOLVED / UNVERIFIABLE / mask 0 readback | [Resolution](https://explorer-studio.genlayer.com/tx/0x7f162523c0c6613996881dae408b995d569d2e9459fcb44f838b0d9b2c2280bb) |
 | Case 2 all-denied permission reads | **false / false / false** confirmed by user after full-address instructions | — |
-| Unauthorized/invalid negative case | PENDING | — |
+| Unauthorized non-owner `resolve_case(1)` | **FINALIZED / ERROR; 5/5 validators `[rollback] owner only`**, confirmed in user's Studio transaction detail screenshot | [Transaction](https://explorer-studio.genlayer.com/tx/0x2a1161b31c645cbfffe15d20ba7385833b10ab3b56f21525eb4f69be6d7c0ba2) |
 | Final CI for deployed commit | Verify Green | — |
 
 **Exit:** Two substantive `FINALIZED` resolutions and one scoped negative check with inspectable readbacks, plus passing CI and evidence documentation. No extra adversarial campaigns unless a genuine blocker appears.
