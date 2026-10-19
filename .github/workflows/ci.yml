@@ -1,4 +1,4 @@
-name: tracejury-quality
+name: causync-quality
 on:
   push:
   pull_request:
@@ -21,7 +21,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install genvm-linter==0.11.0 genlayer-test==0.29.2
-      - run: genvm-lint check contracts/tracejury.py
+      - run: genvm-lint check contracts/causync.py
       - name: Reuse GenVM runner for official DirectVM
         run: |
           mkdir -p ~/.cache/gltest-direct

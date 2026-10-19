@@ -1,4 +1,4 @@
-"""Deterministic TRACEJURY invariants; mocked GenLayer ≠ real consensus."""
+"""Deterministic CAUSYNC invariants; mocked GenLayer ≠ real consensus."""
 import importlib.util
 import json
 import sys
@@ -64,14 +64,14 @@ def fixture(monkeypatch):
     module = make_fake()
     monkeypatch.setitem(sys.modules, "genlayer", module)
     spec = importlib.util.spec_from_file_location(
-        "tracejury_under_test", Path(__file__).resolve().parents[1] /
-        "contracts" / "tracejury.py")
+        "causync_under_test", Path(__file__).resolve().parents[1] /
+        "contracts" / "causync.py")
     c = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = c
     spec.loader.exec_module(c)
-    jury = c.TraceJury()
-    jury.cases = {}
-    return c, jury, module.gl
+    causync = c.Causync()
+    causync.cases = {}
+    return c, causync, module.gl
 
 
 A, B, C, STRANGER = (
@@ -93,22 +93,22 @@ TRACE = (
 
 def document(c, index, obligations=OBLIGATIONS, trace=TRACE, chain="61999"):
     return (
-        f"TRACEJURY_CASE_V1\nCASE_ID: {index}\nCHAIN_ID: {chain}\n"
+        f"CAUSYNC_CASE_V1\nCASE_ID: {index}\nCHAIN_ID: {chain}\n"
         f"AGENT_A: {A}\nAGENT_B: {B}\nAGENT_C: {C}\n\n"
         f"[OBLIGATIONS]\n{obligations}\n[TRACE]\n{trace}"
     )
 
 
 def opened(fixture, obligations=OBLIGATIONS):
-    c, jury, gl = fixture
-    idx = jury.create_case(A, B, C, c.sha256(obligations))
+    c, causync, gl = fixture
+    idx = causync.create_case(A, B, C, c.sha256(obligations))
     return idx
 
 
 def submitted(fixture, source):
-    c, jury, gl = fixture
+    c, causync, gl = fixture
     idx = opened(fixture)
-    jury.submit_evidence(idx, "https://example.org/pinned/case.txt", c.sha256(source))
+    causync.submit_evidence(idx, "https://example.org/pinned/case.txt", c.sha256(source))
     gl.nondet.web.render = lambda url, mode: source
     return idx
 
@@ -123,86 +123,86 @@ def verdict(role, obligation, trace):
 
 
 def test_create_case_scope_and_permissions(fixture):
-    c, jury, gl = fixture
+    c, causync, gl = fixture
     with pytest.raises(UserError, match="zero agent"):
-        jury.create_case("0x"+"0"*40, B, C, c.sha256(OBLIGATIONS))
+        causync.create_case("0x"+"0"*40, B, C, c.sha256(OBLIGATIONS))
     with pytest.raises(UserError, match="identities"):
-        jury.create_case(A, A, C, c.sha256(OBLIGATIONS))
+        causync.create_case(A, A, C, c.sha256(OBLIGATIONS))
     with pytest.raises(UserError, match="specification hash"):
-        jury.create_case(A, B, C, "bad")
-    assert jury.case_count() == 0
+        causync.create_case(A, B, C, "bad")
+    assert causync.case_count() == 0
     idx = opened(fixture)
     assert idx == 1
-    assert jury.can_certify(idx, A) is False
-    assert jury.can_certify(idx, STRANGER) is False
-    status = json.loads(jury.case_status(idx))
+    assert causync.can_certify(idx, A) is False
+    assert causync.can_certify(idx, STRANGER) is False
+    status = json.loads(causync.case_status(idx))
     assert status["state"] == "OPEN"
     assert status["spec_sha256"] == c.sha256(OBLIGATIONS)
     gl.message.sender_address = STRANGER
     with pytest.raises(UserError, match="owner only"):
-        jury.create_case(A, B, C, c.sha256(OBLIGATIONS))
+        causync.create_case(A, B, C, c.sha256(OBLIGATIONS))
     with pytest.raises(UserError, match="owner only"):
-        jury.submit_evidence(idx, "https://example.org/doc.txt", c.sha256("fake"))
+        causync.submit_evidence(idx, "https://example.org/doc.txt", c.sha256("fake"))
 
 
 def test_valid_fault_enforces_case_scoped_consequence(fixture):
-    c, jury, gl = fixture
+    c, causync, gl = fixture
     source = document(c, 1)
     idx = submitted(fixture, source)
     gl.nondet.exec_prompt = lambda _: verdict(
         "B", "Agent B must implement the approved inventory totals without changing quantities.",
         "Agent B changed quantity 12 to 21 in the submitted implementation without authorization.")
-    assert jury.resolve_case(idx) == "AGENT_FAULT"
-    s = json.loads(jury.case_status(idx))
+    assert causync.resolve_case(idx) == "AGENT_FAULT"
+    s = json.loads(causync.case_status(idx))
     assert s["fault_mask"] == 2
     assert s["source_sha256"] == c.sha256(source)
     assert s["state"] == "RESOLVED"
     assert s["support_sha256"] == c.sha256(s["support"])
-    assert jury.can_certify(idx, A) is True
-    assert jury.can_certify(idx, B) is False
-    assert jury.can_certify(idx, C) is True
-    assert jury.can_certify(idx, STRANGER) is False
+    assert causync.can_certify(idx, A) is True
+    assert causync.can_certify(idx, B) is False
+    assert causync.can_certify(idx, C) is True
+    assert causync.can_certify(idx, STRANGER) is False
     with pytest.raises(UserError, match="case not awaiting"):
-        jury.resolve_case(idx)
+        causync.resolve_case(idx)
     with pytest.raises(UserError, match="already committed"):
-        jury.submit_evidence(idx, "https://example.org/other.txt", c.sha256("other"))
+        causync.submit_evidence(idx, "https://example.org/other.txt", c.sha256("other"))
 
 
 def test_missing_and_unreliable_evidence_are_unverifiable(fixture):
-    c, jury, gl = fixture
+    c, causync, gl = fixture
     valid = document(c, 1)
     idx = submitted(fixture, valid)
     gl.nondet.web.render = lambda url, mode: valid.replace("quantity 12", "quantity 13")
-    assert jury.resolve_case(idx) == "UNVERIFIABLE"
-    assert not jury.can_certify(idx, A)
-    assert not jury.can_certify(idx, B)
-    assert not jury.can_certify(idx, C)
+    assert causync.resolve_case(idx) == "UNVERIFIABLE"
+    assert not causync.can_certify(idx, A)
+    assert not causync.can_certify(idx, B)
+    assert not causync.can_certify(idx, C)
 
 
 def test_scope_mismatch_is_not_blame(fixture):
-    c, jury, gl = fixture
+    c, causync, gl = fixture
     wrong_chain = document(c, 1, chain="1")
     idx = submitted(fixture, wrong_chain)
     gl.nondet.exec_prompt = lambda _: verdict(
         "B", "Agent B must implement the approved inventory totals without changing quantities.",
         "Agent B changed quantity 12 to 21 in the submitted implementation without authorization.")
-    assert jury.resolve_case(idx) == "UNVERIFIABLE"
-    assert json.loads(jury.case_status(idx))["fault_mask"] == 0
+    assert causync.resolve_case(idx) == "UNVERIFIABLE"
+    assert json.loads(causync.case_status(idx))["fault_mask"] == 0
 
 
 def test_fabricated_citation_cannot_assign_fault(fixture):
-    c, jury, gl = fixture
+    c, causync, gl = fixture
     source = document(c, 1)
     idx = submitted(fixture, source)
     gl.nondet.exec_prompt = lambda _: verdict(
         "B", "Agent B must implement the approved inventory totals without changing quantities.",
         "Agent B intentionally stole every customer's money.")
-    assert jury.resolve_case(idx) == "UNVERIFIABLE"
-    assert jury.can_certify(idx, B) is False
+    assert causync.resolve_case(idx) == "UNVERIFIABLE"
+    assert causync.can_certify(idx, B) is False
 
 
 def test_shared_fault_requires_support_for_all_roles(fixture):
-    c, jury, gl = fixture
+    c, causync, gl = fixture
     source = document(c, 1)
     idx = submitted(fixture, source)
     gl.nondet.exec_prompt = lambda _: json.dumps({
@@ -211,32 +211,32 @@ def test_shared_fault_requires_support_for_all_roles(fixture):
             "obligation_quote": "Agent B must implement the approved inventory totals without changing quantities.",
             "trace_quote": "Agent B changed quantity 12 to 21 in the submitted implementation without authorization."}]
     })
-    assert jury.resolve_case(idx) == "UNVERIFIABLE"
+    assert causync.resolve_case(idx) == "UNVERIFIABLE"
 
 
 def test_no_fault_is_permitted_after_positive_consensus(fixture):
-    c, jury, gl = fixture
+    c, causync, gl = fixture
     source = document(c, 1)
     idx = submitted(fixture, source)
     gl.nondet.exec_prompt = lambda _: json.dumps({
         "verdict":"NO_FAULT", "fault_mask":0, "support":[]})
-    assert jury.resolve_case(idx) == "NO_FAULT"
-    assert all(jury.can_certify(idx, who) for who in (A, B, C))
+    assert causync.resolve_case(idx) == "NO_FAULT"
+    assert all(causync.can_certify(idx, who) for who in (A, B, C))
 
 
 def test_unauthorized_resolution_and_bad_inputs(fixture):
-    c, jury, gl = fixture
+    c, causync, gl = fixture
     idx = opened(fixture)
     with pytest.raises(UserError, match="invalid evidence URL"):
-        jury.submit_evidence(idx, "http://unsafe.org/data", c.sha256("x"))
+        causync.submit_evidence(idx, "http://unsafe.org/data", c.sha256("x"))
     with pytest.raises(UserError, match="digest"):
-        jury.submit_evidence(idx, "https://example.org/doc", "ff")
+        causync.submit_evidence(idx, "https://example.org/doc", "ff")
     source = document(c, idx)
-    jury.submit_evidence(idx, "https://example.org/pinned.txt", c.sha256(source))
+    causync.submit_evidence(idx, "https://example.org/pinned.txt", c.sha256(source))
     gl.message.sender_address = STRANGER
     with pytest.raises(UserError, match="owner only"):
-        jury.resolve_case(idx)
+        causync.resolve_case(idx)
     gl.message.sender_address = Address("0x"+"f"*40)
-    assert json.loads(jury.case_status(idx))["state"] == "SUBMITTED"
+    assert json.loads(causync.case_status(idx))["state"] == "SUBMITTED"
     with pytest.raises(UserError, match="unknown case"):
-        jury.case_status(99)
+        causync.case_status(99)

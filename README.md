@@ -1,8 +1,10 @@
-# TRACEJURY
+# CAUSYNC
 
-**Consensus-based fault attribution for multi-agent workflows.**
+**From evidence to accountable decisions.**
 
-TRACEJURY is a standalone GenLayer Intelligent Contract primitive for resolving responsibility in workflows with three participating AI agents. An owner registers each case with a frozen obligations digest; after the owner commits a full evidence-document SHA-256, independent GenLayer validators review the same source and agree on a structured attribution verdict.
+*Consensus-based fault attribution for multi-agent AI workflows.*
+
+CAUSYNC is a standalone GenLayer Intelligent Contract primitive for resolving responsibility in workflows with three participating AI agents. An owner registers each case with a frozen obligations digest; after the owner commits a full evidence-document SHA-256, independent GenLayer validators review the same source and agree on a structured attribution verdict.
 
 **Contract goal:** make a disputed outcome consequential through an immutable, case-scoped eligibility view, while treating missing or inconclusive evidence as **UNVERIFIABLE**, never as proof of failure.
 
@@ -24,14 +26,19 @@ TRACEJURY is a standalone GenLayer Intelligent Contract primitive for resolving 
 4. One explicit invalid/unauthorized source or actor test, readable audit and finality receipts.
 5. Link the contract, tests and evidence in a concise reviewer submission; stop. No frontend requirement.
 
+## Repository and contract identity
+
+- Repository: `bearbaba/CAUSYNC`
+- Contract class: `Causync`
+- Evidence envelope: `CAUSYNC_CASE_V1`
+- Public API is unchanged from the initial prototype.
+
 ## Project files
 
-- `contracts/tracejury.py` — standalone deployable GenLayer contract
+- `contracts/causync.py` — standalone deployable GenLayer contract
 - `tests/test_local.py` — deterministic state and evidence checks using a mocked GenLayer environment
 - `tests/test_direct_genvm.py` — official SDK DirectVM smoke test
-- `docs/ARCHITECTURE.md` — trust model and validation protocol
-- `docs/DEMO.md` — live verification and evidence recording procedure
-- `examples/` — local illustrative evidence fixtures, not authority for actual cases
+- Architecture, demonstration evidence, and live fixtures will be added only when their corresponding verification milestone is reached.
 
 ## Core workflow
 

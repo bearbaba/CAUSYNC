@@ -1,5 +1,5 @@
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
-"""TRACEJURY V1 — evidence-bound multi-agent fault attribution.
+"""CAUSYNC V1 — evidence-bound multi-agent fault attribution.
 
 Comparative GenLayer consensus decides what obligations and execution traces
 mean; deterministic code binds case IDs, participants, chain and document
@@ -13,7 +13,7 @@ import hashlib
 import json
 import re
 
-MAGIC = "TRACEJURY_CASE_V1"
+MAGIC = "CAUSYNC_CASE_V1"
 MAX_DOCUMENT_BYTES = 8192
 MAX_QUOTE_LENGTH = 240
 MAX_URL_LENGTH = 240
@@ -164,7 +164,7 @@ class CaseRecord:
     support_json: str
 
 
-class TraceJury(gl.Contract):
+class Causync(gl.Contract):
     owner: Address
     chain_id: str
     next_case_id: u256
