@@ -60,6 +60,6 @@ CAUSYNC is a standalone GenLayer Intelligent Contract primitive for resolving re
 
 **Verification:** CI compiles sources, validates both fixtures, exercises mocked state/security tests and runs official GenVM lint and SDK DirectVM tests. See the [live demo protocol](docs/DEMO.md) for the remaining acceptance gate.
 
-Current status: contract and CI development. **No Studionet deployment or FINALIZED CAUSYNC verdict has yet been supplied**, and no mainnet security claim is made.
+**Studionet progress (2026-10-19):** deployed instance `0xe9224eE4b220a8eFdd6000d26bE2217bD59972Ea` has user-provided on-chain readbacks for **Case #1: RESOLVED / AGENT_FAULT / fault mask 2** (with `can_certify(A/B/C) = true/false/true`) and **Case #2: RESOLVED / UNVERIFIABLE / mask 0**. The exact full evidence digests match in both cases. Explorer FINALIZED resolution transaction URLs have **not** yet been supplied, so deployment and receipt verification remains pending. See [Studionet evidence](docs/STUDIONET_EVIDENCE.md). This is not a mainnet security audit.
 
 MIT License.

@@ -53,7 +53,7 @@ If Studio assigns a different case ID, uses a chain other than 61999, or normali
 
 ## Evidence checklist (record only actual receipts)
 
-Detailed Case #1 readback: [STUDIONET_EVIDENCE.md](STUDIONET_EVIDENCE.md).
+Detailed Case #1 and Case #2 readbacks: [STUDIONET_EVIDENCE.md](STUDIONET_EVIDENCE.md).
 
 | Artifact | Observed result | Explorer URL |
 | --- | --- | --- |
@@ -61,9 +61,9 @@ Detailed Case #1 readback: [STUDIONET_EVIDENCE.md](STUDIONET_EVIDENCE.md).
 | Case 1 create | User reported FINALIZED; Explorer TX URL pending | — |
 | Case 1 resolution | **RESOLVED / AGENT_FAULT / mask 2** from case_status readback; resolve TX FINALIZED status not yet independently verified | — |
 | Case 1 source digest + support | Exact digest matches; Agent B obligation and breach quotes recorded | — |
-| Case 1 can_certify(A/B/C) | PENDING | — |
-| Case 2 create/submit/resolve | PENDING | — |
-| Case 2 all-denied permission reads | PENDING | — |
+| Case 1 can_certify(A/B/C) | **true / false / true** (user-provided readbacks) | — |
+| Case 2 create/submit/resolve | **RESOLVED / UNVERIFIABLE / mask 0** (case_status readback); resolve TX FINALIZED status still to verify | — |
+| Case 2 all-denied permission reads | PENDING: three can_certify calls | — |
 | Unauthorized/invalid negative case | PENDING | — |
 | Final CI for deployed commit | Verify Green | — |
 
