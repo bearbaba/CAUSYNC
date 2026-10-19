@@ -6,7 +6,7 @@ This procedure is **not yet claimed as completed**. The supplied two fixtures ar
 
 - Studio link: https://studio.genlayer.com/?import-contract=0xe9224eE4b220a8eFdd6000d26bE2217bD59972Ea
 - Deployment contract address: `0xe9224eE4b220a8eFdd6000d26bE2217bD59972Ea`.
-- User-provided Studio screenshot (2026-10-19) displayed **ACCEPTED**. The full deployment transaction hash, execution result and **FINALIZED** Explorer receipt have **not** yet been verified; do not label the deployment FINALIZED.
+- User-provided Studio screenshot (2026-10-19) displays **FINALIZED** for deployment plus all six case-write transactions. All seven full hashes are in [STUDIONET_EVIDENCE.md](STUDIONET_EVIDENCE.md). Independent Explorer fetch not yet completed.
 - Verified CI run: https://github.com/bearbaba/CAUSYNC/actions/runs/39215696385
 - Pinned fixture commit: `158573ff86c5a08334d8a4ab5354fecd61ad4309` (both fixture files present at this commit).
 
@@ -57,13 +57,13 @@ Detailed Case #1 and Case #2 readbacks: [STUDIONET_EVIDENCE.md](STUDIONET_EVIDEN
 
 | Artifact | Observed result | Explorer URL |
 | --- | --- | --- |
-| Deployment | PENDING | — |
-| Case 1 create | User reported FINALIZED; Explorer TX URL pending | — |
-| Case 1 resolution | **RESOLVED / AGENT_FAULT / mask 2** from case_status readback; resolve TX FINALIZED status not yet independently verified | — |
+| Deployment | **FINALIZED (Studio screenshot)** | [Transaction](https://explorer-studio.genlayer.com/tx/0x667e61933e7223fbefcaf91e40b43fc5e5ab584bcd594a0f8c4efb8a3f920a29) |
+| Case 1 create | **FINALIZED (Studio screenshot)** | [Transaction](https://explorer-studio.genlayer.com/tx/0xcad9c673dd5b0a6fe7b7eb9fc63e76d33a276a80ad828954fc3811f5e840fa96) |
+| Case 1 resolution | **FINALIZED (Studio screenshot)**; RESOLVED / AGENT_FAULT / mask 2 readback | [Transaction](https://explorer-studio.genlayer.com/tx/0x565478addfba9d7836c5e2541c6c33f9e8ca88cbfcf56777131ef991e186e42a) |
 | Case 1 source digest + support | Exact digest matches; Agent B obligation and breach quotes recorded | — |
 | Case 1 can_certify(A/B/C) | **true / false / true** (user-provided readbacks) | — |
-| Case 2 create/submit/resolve | **RESOLVED / UNVERIFIABLE / mask 0** (case_status readback); resolve TX FINALIZED status still to verify | — |
-| Case 2 all-denied permission reads | PENDING: three can_certify calls | — |
+| Case 2 create/submit/resolve | **FINALIZED (Studio screenshot)**; RESOLVED / UNVERIFIABLE / mask 0 readback | [Resolution](https://explorer-studio.genlayer.com/tx/0x7f162523c0c6613996881dae408b995d569d2e9459fcb44f838b0d9b2c2280bb) |
+| Case 2 all-denied permission reads | Reported false/false/false; **confirm full 42-character addresses used**, not `...` | — |
 | Unauthorized/invalid negative case | PENDING | — |
 | Final CI for deployed commit | Verify Green | — |
 
