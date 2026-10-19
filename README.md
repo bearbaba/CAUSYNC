@@ -44,6 +44,7 @@ CAUSYNC is a standalone GenLayer Intelligent Contract primitive for resolving re
 - `docs/ARCHITECTURE.md` — validator/evidence boundary, verdict state machine and integrator contract
 - `docs/SECURITY.md` — defenses, residual threats and authority model
 - `docs/DEMO.md` — bounded two-case Studio walkthrough, no invented receipts
+- `docs/STUDIONET_EVIDENCE.md` — observed on-chain case results, immutable source hashes and receipt checklist
 - `examples/case_01_fault.txt`, `examples/case_02_unverifiable.txt` — pinned test cases
 - `scripts/prepare_case.py` — offline SHA-256 preparation for exact Studio inputs
 - `LICENSE` — MIT license
