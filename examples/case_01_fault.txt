@@ -1,0 +1,15 @@
+CAUSYNC_CASE_V1
+CASE_ID: 1
+CHAIN_ID: 61999
+AGENT_A: 0x1111111111111111111111111111111111111111
+AGENT_B: 0x2222222222222222222222222222222222222222
+AGENT_C: 0x3333333333333333333333333333333333333333
+
+[OBLIGATIONS]
+Agent A must deliver a source-verified inventory report to Agent B.
+Agent B must implement the approved inventory totals without changing quantities.
+Agent C must validate delivered output against the approved totals.
+[TRACE]
+Agent A delivered source-verified inventory quantities with reference IDs.
+Agent B changed quantity 12 to 21 in the submitted implementation without authorization.
+Agent C flagged the quantity mismatch during validation.
