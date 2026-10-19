@@ -168,15 +168,39 @@ def test_valid_fault_enforces_case_scoped_consequence(fixture):
         causync.submit_evidence(idx, "https://example.org/other.txt", c.sha256("other"))
 
 
-def test_missing_and_unreliable_evidence_are_unverifiable(fixture):
+def test_source_mismatch_does_not_finalize_and_retry_succeeds(fixture):
     c, causync, gl = fixture
     valid = document(c, 1)
     idx = submitted(fixture, valid)
     gl.nondet.web.render = lambda url, mode: valid.replace("quantity 12", "quantity 13")
-    assert causync.resolve_case(idx) == "UNVERIFIABLE"
-    assert not causync.can_certify(idx, A)
+    assert causync.resolve_case(idx) == "SOURCE_MISMATCH"
+    assert json.loads(causync.case_status(idx))["state"] == "SUBMITTED"
+    assert all(not causync.can_certify(idx, who) for who in (A, B, C))
+    gl.nondet.web.render = lambda url, mode: valid
+    gl.nondet.exec_prompt = lambda _: verdict(
+        "B", "Agent B must implement the approved inventory totals without changing quantities.",
+        "Agent B changed quantity 12 to 21 in the submitted implementation without authorization.")
+    assert causync.resolve_case(idx) == "AGENT_FAULT"
+    assert causync.can_certify(idx, A)
     assert not causync.can_certify(idx, B)
-    assert not causync.can_certify(idx, C)
+
+
+def test_unavailable_source_is_retriable_without_grants(fixture):
+    c, causync, gl = fixture
+    valid = document(c, 1)
+    idx = submitted(fixture, valid)
+    def unavailable(url, mode):
+        raise TimeoutError("temporary network outage")
+    gl.nondet.web.render = unavailable
+    assert causync.resolve_case(idx) == "SOURCE_UNAVAILABLE"
+    assert json.loads(causync.case_status(idx))["state"] == "SUBMITTED"
+    assert not causync.can_certify(idx, A)
+    gl.nondet.web.render = lambda url, mode: valid
+    gl.nondet.exec_prompt = lambda _: json.dumps({
+        "verdict": "UNVERIFIABLE", "fault_mask": 0, "support": []})
+    assert causync.resolve_case(idx) == "UNVERIFIABLE"
+    assert json.loads(causync.case_status(idx))["state"] == "RESOLVED"
+    assert not causync.can_certify(idx, A)
 
 
 def test_scope_mismatch_is_not_blame(fixture):
@@ -214,14 +238,41 @@ def test_shared_fault_requires_support_for_all_roles(fixture):
     assert causync.resolve_case(idx) == "UNVERIFIABLE"
 
 
-def test_no_fault_is_permitted_after_positive_consensus(fixture):
+def test_no_fault_requires_three_affirmative_evidence_pairs(fixture):
     c, causync, gl = fixture
     source = document(c, 1)
     idx = submitted(fixture, source)
     gl.nondet.exec_prompt = lambda _: json.dumps({
-        "verdict":"NO_FAULT", "fault_mask":0, "support":[]})
+        "verdict": "NO_FAULT", "fault_mask": 0, "support": []})
+    assert causync.resolve_case(idx) == "UNVERIFIABLE"
+    assert all(not causync.can_certify(idx, who) for who in (A, B, C))
+
+
+def test_no_fault_positive_three_role_evidence(fixture):
+    c, causync, gl = fixture
+    affirmative = (
+        "Agent A delivered source-verified inventory quantities with reference IDs.\n"
+        "Agent B implemented the approved inventory totals without changing quantities.\n"
+        "Agent C validated the delivered output against the approved totals."
+    )
+    source = document(c, 1, trace=affirmative)
+    idx = submitted(fixture, source)
+    gl.nondet.exec_prompt = lambda _: json.dumps({
+        "verdict": "NO_FAULT", "fault_mask": 0, "support": [
+            {"role": "A",
+             "obligation_quote": "Agent A must deliver a source-verified inventory report to Agent B.",
+             "trace_quote": "Agent A delivered source-verified inventory quantities with reference IDs."},
+            {"role": "B",
+             "obligation_quote": "Agent B must implement the approved inventory totals without changing quantities.",
+             "trace_quote": "Agent B implemented the approved inventory totals without changing quantities."},
+            {"role": "C",
+             "obligation_quote": "Agent C must validate delivered output against the approved totals.",
+             "trace_quote": "Agent C validated the delivered output against the approved totals."}
+        ]})
     assert causync.resolve_case(idx) == "NO_FAULT"
     assert all(causync.can_certify(idx, who) for who in (A, B, C))
+    status = json.loads(causync.case_status(idx))
+    assert len(json.loads(status["support"])) == 3
 
 
 def test_unauthorized_resolution_and_bad_inputs(fixture):
