@@ -15,8 +15,11 @@ CAUSYNC is a standalone GenLayer Intelligent Contract primitive for resolving re
 - Deterministic chain/case/agent envelope checks before semantic reasoning.
 - Comparative consensus on decision, fault bitmask, document digest and verbatim supporting quotes.
 - Verdicts: `NO_FAULT`, `AGENT_FAULT`, `SHARED_FAULT`, `UNVERIFIABLE`.
-- Permanent outcome per case; `can_certify(case_id, agent)` denies blamed agents and denies everyone when unverified.
-- No tokens, deposits or automated punishment. The consumer decides how to use the eligibility view.
+- Terminal, immutable verdict per case: `can_certify(case_id, agent)` denies blamed agents and denies everyone for inconclusive evidence.
+- `NO_FAULT` requires affirmative obligation/trace evidence for all three agents; missing evidence can never grant a positive certificate.
+- Network fetch failures and changed source hashes are **retriable** observations (`SOURCE_UNAVAILABLE`, `SOURCE_MISMATCH`), not terminal fault verdicts.
+- Every terminal verdict is bound to the already pinned full-document SHA-256.
+- No deposits or automated penalties. Each consumer decides how to use the **case-scoped** eligibility view.
 
 ## Verification milestones (fixed exit criteria)
 
@@ -38,7 +41,12 @@ CAUSYNC is a standalone GenLayer Intelligent Contract primitive for resolving re
 - `contracts/causync.py` — standalone deployable GenLayer contract
 - `tests/test_local.py` — deterministic state and evidence checks using a mocked GenLayer environment
 - `tests/test_direct_genvm.py` — official SDK DirectVM smoke test
-- Architecture, demonstration evidence, and live fixtures will be added only when their corresponding verification milestone is reached.
+- `docs/ARCHITECTURE.md` — validator/evidence boundary, verdict state machine and integrator contract
+- `docs/SECURITY.md` — defenses, residual threats and authority model
+- `docs/DEMO.md` — bounded two-case Studio walkthrough, no invented receipts
+- `examples/case_01_fault.txt`, `examples/case_02_unverifiable.txt` — pinned test cases
+- `scripts/prepare_case.py` — offline SHA-256 preparation for exact Studio inputs
+- `LICENSE` — MIT license
 
 ## Core workflow
 
@@ -47,8 +55,10 @@ CAUSYNC is a standalone GenLayer Intelligent Contract primitive for resolving re
 3. Owner: `resolve_case(case_id)`; validators independently read, verify and classify.
 4. Any caller: `case_status(case_id)`, `case_count()`, `can_certify(case_id, agent)`.
 
-**Boundary:** a pinned digest establishes integrity, not the real-world truth of a log or publisher identity. Caller authorization and immutable hashes do not prove a document was genuine. AI agreement alone does not guarantee causal truth. The prototype deliberately makes `UNVERIFIABLE` deny positive certifications.
+**Boundary:** a pinned digest establishes integrity, not the real-world truth of a log or publisher identity. In V1 the owner defines the workflow and pins evidence; participating agents do not cryptographically co-sign. AI agreement does not prove the trace really occurred. `can_certify()` attests only to that owner's evidence-bound case and must not be treated as global reputation. `UNVERIFIABLE` denies all certifications.
 
-Current status: source-development phase. Do not claim a successful deployment or FINALIZED receipt before evidence exists.
+**Verification:** CI compiles sources, validates both fixtures, exercises mocked state/security tests and runs official GenVM lint and SDK DirectVM tests. See the [live demo protocol](docs/DEMO.md) for the remaining acceptance gate.
+
+Current status: contract and CI development. **No Studionet deployment or FINALIZED CAUSYNC verdict has yet been supplied**, and no mainnet security claim is made.
 
 MIT License.
