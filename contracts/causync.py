@@ -322,10 +322,11 @@ DOCUMENT:
                         "invalid mismatching source digest")
             return agreed
         require(verdict in DECISIONS, "invalid consensus verdict")
-        require(good_digest(digest) or (verdict == "UNVERIFIABLE" and digest == ""),
-                "bad consensus document digest")
-        if verdict != "UNVERIFIABLE":
-            require(digest == pinned_hash, "consensus source hash mismatch")
+        # Every *terminal* verdict, including UNVERIFIABLE, must refer to
+        # the exact immutable document committed by the owner. Retriable
+        # source failures were handled above.
+        require(good_digest(digest) and digest == pinned_hash,
+                "terminal consensus source hash mismatch")
         # Revalidate mask and quotes deterministically after consensus.
         if verdict == "UNVERIFIABLE":
             require(agreed.get("fault_mask") == 0 and agreed.get("support") == [],
