@@ -119,12 +119,20 @@ def check_verdict(data: dict, obligations: str, trace: str) -> dict:
             "invalid verdict or fault mask")
     require(type(support) is list and len(support) <= 3,
             "invalid support")
-    if decision in ("NO_FAULT", "UNVERIFIABLE"):
+    if decision == "UNVERIFIABLE":
         require(mask == 0 and support == [], "unproven blame")
     else:
-        require((decision == "AGENT_FAULT" and mask in (1, 2, 4)) or
-                (decision == "SHARED_FAULT" and mask in (3, 5, 6, 7)),
-                "invalid blamed roles")
+        # NO_FAULT certifies every agent, so it needs affirmative, role-bound
+        # evidence for ALL THREE agents instead of a zero-citation assertion.
+        if decision == "NO_FAULT":
+            require(mask == 0 and len(support) == 3,
+                    "no-fault needs evidence for every agent")
+            expected_roles = 7
+        else:
+            require((decision == "AGENT_FAULT" and mask in (1, 2, 4)) or
+                    (decision == "SHARED_FAULT" and mask in (3, 5, 6, 7)),
+                    "invalid blamed roles")
+            expected_roles = mask
         seen = 0
         for item in support:
             require(type(item) is dict, "invalid citation")
@@ -142,7 +150,7 @@ def check_verdict(data: dict, obligations: str, trace: str) -> dict:
                     obligation in obligations and observation in trace,
                     "unsupported role-specific quotations")
             seen |= ROLE_BITS[role]
-        require(seen == mask, "missing evidence for blamed participant")
+        require(seen == expected_roles, "missing evidence for required participants")
     return {"verdict": decision, "fault_mask": mask, "support": support}
 
 
@@ -230,11 +238,13 @@ class Causync(gl.Contract):
             try:
                 document = gl.nondet.web.render(url, mode="text")
             except Exception:
-                return canonical({"verdict": "UNVERIFIABLE", "fault_mask": 0,
+                return canonical({"verdict": "SOURCE_UNAVAILABLE", "fault_mask": 0,
                                   "source_sha256": "", "support": []})
             digest = sha256(document) if isinstance(document, str) and len(document) <= MAX_DOCUMENT_BYTES else ""
             if digest != pinned_hash:
-                return canonical({"verdict": "UNVERIFIABLE", "fault_mask": 0,
+                # A temporarily stale/offline host cannot permanently resolve
+                # an otherwise immutable case. Keep SUBMITTED for a retry.
+                return canonical({"verdict": "SOURCE_MISMATCH", "fault_mask": 0,
                                   "source_sha256": digest, "support": []})
             try:
                 obligations, trace = split_document(document, case_id, chain, aa, bb, cc, spec_hash)
@@ -252,8 +262,8 @@ blame merely because an agent acted last. Do not transfer fault to agents
 whose own obligation was met. Allegations alone are not evidence.
 
 Only choose AGENT_FAULT (one proven breached agent), SHARED_FAULT (two or three
-independently proven breached agents), NO_FAULT (affirmative proof the agents
-fulfilled their relevant obligations), or UNVERIFIABLE (insufficient,
+independently proven breached agents), NO_FAULT (affirmative proof EACH agent
+fulfilled its own relevant obligation), or UNVERIFIABLE (insufficient,
 contradictory or unreliable information). Unclear = UNVERIFIABLE, not fault.
 
 Return only compact JSON:
@@ -264,7 +274,9 @@ Return only compact JSON:
 Masks: A=1 B=2 C=4; sum exactly proven responsible roles.
 One evidence pair PER blamed role, each citation begins "Agent X " and
 quotes a contiguous substring (16..240 chars) of the matching source section.
-For NO_FAULT or UNVERIFIABLE mask=0 and support=[].
+For NO_FAULT fault_mask=0, support MUST include a full evidence pair
+for ALL THREE agents, demonstrating that each satisfied its obligation.
+For UNVERIFIABLE fault_mask=0, support=[].
 When in doubt return UNVERIFIABLE.
 
 DOCUMENT:
@@ -290,12 +302,26 @@ DOCUMENT:
             "supporting quote spans are equivalent only when they establish the "
             "same specific breach by the same agent. NO_FAULT requires affirmative "
             "evidence of satisfactory execution. Any incomplete or contradictory "
-            "evidence must resolve as UNVERIFIABLE; it is not equivalent to blame."
+            "evidence must resolve as UNVERIFIABLE; it is not equivalent to blame. "
+            "A fetch failure (SOURCE_UNAVAILABLE) or a full-document hash "
+            "mismatch (SOURCE_MISMATCH) is a retriable observation, NEVER a "
+            "final fault verdict, and is not equivalent to a valid result."
         )
         raw = gl.eq_principle.prompt_comparative(evaluate, principle)
         agreed = parse_response(raw)
         verdict = agreed.get("verdict")
         digest = agreed.get("source_sha256")
+        if verdict in ("SOURCE_UNAVAILABLE", "SOURCE_MISMATCH"):
+            # Transport/integrity failures are diagnostics, not judgments.
+            require(agreed.get("fault_mask") == 0 and agreed.get("support") == [],
+                    "invalid source failure shape")
+            if verdict == "SOURCE_UNAVAILABLE":
+                require(digest == "", "unavailable source must have empty digest")
+            else:
+                require(digest == "" or good_digest(digest),
+                        "invalid mismatching source digest")
+            return agreed
+        require(verdict in DECISIONS, "invalid consensus verdict")
         require(good_digest(digest) or (verdict == "UNVERIFIABLE" and digest == ""),
                 "bad consensus document digest")
         if verdict != "UNVERIFIABLE":
@@ -312,9 +338,7 @@ DOCUMENT:
             require(type(roles) is list, "missing support")
             mask = agreed.get("fault_mask")
             require(type(mask) is int and 0 <= mask <= 7, "bad consensus fault mask")
-            if verdict == "NO_FAULT":
-                require(mask == 0 and roles == [], "no-fault must not blame")
-            elif verdict in ("AGENT_FAULT", "SHARED_FAULT"):
+            if verdict in ("NO_FAULT", "AGENT_FAULT", "SHARED_FAULT"):
                 actual = 0
                 for item in roles:
                     require(type(item) is dict and item.get("role") in ROLE_BITS,
@@ -326,10 +350,13 @@ DOCUMENT:
                         q = item.get(k)
                         require(type(q) is str and 16 <= len(q) <= MAX_QUOTE_LENGTH,
                                 "bad consensus quote")
-                require(actual == mask and
-                        ((verdict == "AGENT_FAULT" and mask in (1, 2, 4)) or
-                         (verdict == "SHARED_FAULT" and mask in (3, 5, 6, 7))),
-                        "consensus verdict mismatch")
+                require(
+                    (verdict == "NO_FAULT" and mask == 0 and actual == 7) or
+                    (verdict == "AGENT_FAULT" and mask in (1, 2, 4)
+                     and actual == mask) or
+                    (verdict == "SHARED_FAULT" and mask in (3, 5, 6, 7)
+                     and actual == mask),
+                    "consensus verdict mismatch")
             else:
                 raise gl.vm.UserError("unrecognized consensus verdict")
         return agreed
@@ -340,6 +367,10 @@ DOCUMENT:
         case = self._case(case_id)
         require(case.state == "SUBMITTED", "case not awaiting resolution")
         result = self._observe(case_id, case)
+        if result["verdict"] in ("SOURCE_UNAVAILABLE", "SOURCE_MISMATCH"):
+            # No final outcome and no permission grant on temporary source
+            # failures; a later call may observe the exact pinned document.
+            return result["verdict"]
         case.state = "RESOLVED"
         case.verdict = result["verdict"]
         case.fault_mask = u256(result["fault_mask"])
