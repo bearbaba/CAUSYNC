@@ -1,0 +1,30 @@
+name: tracejury-quality
+on:
+  push:
+  pull_request:
+jobs:
+  local-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m compileall -q contracts tests
+      - run: python -m pytest -q tests/test_local.py
+  genvm-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install genvm-linter==0.11.0 genlayer-test==0.29.2
+      - run: genvm-lint check contracts/tracejury.py
+      - name: Reuse GenVM runner for official DirectVM
+        run: |
+          mkdir -p ~/.cache/gltest-direct
+          cp -n ~/.cache/genvm-linter/genvm-universal-*.tar.xz ~/.cache/gltest-direct/
+          ls -lh ~/.cache/gltest-direct/
+      - run: python -m pytest -q tests/test_direct_genvm.py
