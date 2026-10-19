@@ -79,14 +79,14 @@ The `source_sha256` matches the pinned `evidence_sha256`. The contract stores ex
 Frozen example:
 https://raw.githubusercontent.com/bearbaba/CAUSYNC/158573ff86c5a08334d8a4ab5354fecd61ad4309/examples/case_02_unverifiable.txt
 
-The `source_sha256` matches the immutable `evidence_sha256`; the on-chain result was `UNVERIFIABLE`, not a fabricated fault accusation. The empty support list and mask zero agree with that decision. This is a user-provided **readback**. The Case #2 resolution TX is now linked above and marked FINALIZED in the Studio screenshot (not separately verified in Explorer). The three `can_certify(2, A/B/C)` results have not yet been supplied; the expected results under the deployed contract's logic are `false`, `false`, `false`.
+The `source_sha256` matches the immutable `evidence_sha256`; the on-chain result was `UNVERIFIABLE`, not a fabricated fault accusation. The empty support list and mask zero agree with that decision. This is a user-provided **readback**. The Case #2 resolution TX is now linked above and marked FINALIZED in the Studio screenshot (not separately verified in Explorer). The user has now confirmed all three `can_certify(2, A/B/C)` readbacks returned `false / false / false` after being instructed to use full 42-character participant addresses. This is a user-reported observation; the exact submitted address input text was not separately captured. The all-denied result matches the terminal `UNVERIFIABLE` verdict.
 
 ## Remaining verification
 
 - [x] Seven full transaction hashes recorded, all displayed as **FINALIZED** in the user's Studio screenshot.
 - [x] Case #1 `can_certify` readbacks using complete agent addresses: `true / false / true`.
 - [x] Both cases: `RESOLVED` readbacks, digest matches, verdicts and supporting evidence recorded.
-- [ ] Case #2: confirm `can_certify` calls used the **complete 42-character addresses** (not literal `...`), and obtain three `false` readbacks if needed. A shortened/invalid address can produce a false result unrelated to the verdict.
+- [x] Case #2 `can_certify(2, A/B/C)` all denied: `false / false / false` (user-confirmed after full-address guidance; exact input text not independently captured).
 - [ ] Optionally cross-check receipt details directly in Explorer; linked URLs above come from the user-supplied hashes.
 - [ ] One live unauthorized/invalid test if required to satisfy the original acceptance protocol; negative access tests already pass in CI.
 

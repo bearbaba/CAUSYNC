@@ -63,7 +63,7 @@ Detailed Case #1 and Case #2 readbacks: [STUDIONET_EVIDENCE.md](STUDIONET_EVIDEN
 | Case 1 source digest + support | Exact digest matches; Agent B obligation and breach quotes recorded | — |
 | Case 1 can_certify(A/B/C) | **true / false / true** (user-provided readbacks) | — |
 | Case 2 create/submit/resolve | **FINALIZED (Studio screenshot)**; RESOLVED / UNVERIFIABLE / mask 0 readback | [Resolution](https://explorer-studio.genlayer.com/tx/0x7f162523c0c6613996881dae408b995d569d2e9459fcb44f838b0d9b2c2280bb) |
-| Case 2 all-denied permission reads | Reported false/false/false; **confirm full 42-character addresses used**, not `...` | — |
+| Case 2 all-denied permission reads | **false / false / false** confirmed by user after full-address instructions | — |
 | Unauthorized/invalid negative case | PENDING | — |
 | Final CI for deployed commit | Verify Green | — |
 
