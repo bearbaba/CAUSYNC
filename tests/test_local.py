@@ -291,3 +291,19 @@ def test_unauthorized_resolution_and_bad_inputs(fixture):
     assert json.loads(causync.case_status(idx))["state"] == "SUBMITTED"
     with pytest.raises(UserError, match="unknown case"):
         causync.case_status(99)
+
+
+def test_terminal_unverifiable_cannot_use_unpinned_source_hash(fixture):
+    c, causync, gl = fixture
+    source = document(c, 1)
+    idx = submitted(fixture, source)
+    forged = json.dumps({
+        "verdict": "UNVERIFIABLE",
+        "fault_mask": 0,
+        "source_sha256": "f"*64,
+        "support": []})
+    gl.eq_principle.prompt_comparative = lambda evaluate, principle: forged
+    with pytest.raises(UserError, match="terminal consensus source hash mismatch"):
+        causync.resolve_case(idx)
+    assert json.loads(causync.case_status(idx))["state"] == "SUBMITTED"
+    assert all(not causync.can_certify(idx, who) for who in (A, B, C))
